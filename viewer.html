@@ -1,0 +1,1862 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>研究室探訪 — スケジュール一覧</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;600&family=Zen+Antique&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --ink: #1a1208;
+        --paper: #f5f0e8;
+        --paper-dark: #ede6d6;
+        --paper-mid: #f0eadc;
+        --accent: #8b3a2a;
+        --accent-light: #c4614e;
+        --accent-pale: #f3e8e5;
+        --border: #c8bfa8;
+        --border-light: #ddd5c0;
+        --shadow: rgba(26, 18, 8, 0.12);
+        --green: #2e7d32;
+        --green-bg: #e8f5e9;
+        --green-border: #a5d6a7;
+        --cap-0: #ede6d6;
+        --cap-low: #fce4d6;
+        --cap-mid: #f4a58a;
+        --cap-high: #c4614e;
+        --cap-full: #8b3a2a;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        background: var(--paper);
+        color: var(--ink);
+        font-family: "Noto Serif JP", serif;
+        min-height: 100vh;
+        background-image:
+          radial-gradient(ellipse at top left, #e8dcc8 0%, transparent 55%),
+          radial-gradient(ellipse at bottom right, #ddd0b8 0%, transparent 55%);
+      }
+
+      /* ── SIDEBAR LAYOUT ── */
+      .layout {
+        display: flex;
+        min-height: 100vh;
+      }
+
+      /* Sidebar */
+      .sidebar {
+        width: 260px;
+        flex-shrink: 0;
+        background: white;
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
+      }
+      .sidebar-header {
+        padding: 28px 24px 20px;
+        border-bottom: 1px solid var(--border-light);
+        text-align: center;
+      }
+      .sidebar-logo {
+        font-size: 10px;
+        letter-spacing: 4px;
+        color: var(--accent);
+        margin-bottom: 6px;
+        opacity: 0.8;
+      }
+      .sidebar-title {
+        font-family: "Zen Antique", serif;
+        font-size: 18px;
+        letter-spacing: 4px;
+        color: var(--ink);
+        font-weight: 400;
+      }
+      .sidebar-sub {
+        font-size: 11px;
+        color: #9a8f7e;
+        letter-spacing: 1px;
+        margin-top: 4px;
+      }
+
+      /* Upload zone in sidebar */
+      .upload-zone {
+        margin: 16px;
+        border: 2px dashed var(--border);
+        border-radius: 6px;
+        padding: 20px 12px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.25s;
+        background: var(--paper-mid);
+        position: relative;
+      }
+      .upload-zone:hover,
+      .upload-zone.drag-over {
+        border-color: var(--accent);
+        background: var(--accent-pale);
+      }
+      .upload-zone input[type="file"] {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        cursor: pointer;
+        width: 100%;
+        height: 100%;
+      }
+      .upload-icon {
+        font-size: 28px;
+        margin-bottom: 8px;
+      }
+      .upload-text {
+        font-size: 12px;
+        color: #7a6f5e;
+        letter-spacing: 0.5px;
+        line-height: 1.6;
+      }
+      .upload-text strong {
+        color: var(--accent);
+      }
+
+      /* File list */
+      .file-list {
+        padding: 0 16px 12px;
+        flex: 1;
+      }
+      .file-list-label {
+        font-size: 10px;
+        letter-spacing: 3px;
+        color: var(--accent);
+        text-transform: uppercase;
+        padding: 12px 0 8px;
+        font-weight: 600;
+      }
+      .file-chip {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        border-radius: 4px;
+        margin-bottom: 4px;
+        font-size: 12px;
+        color: #5a4e3a;
+        background: var(--paper-mid);
+        border: 1px solid var(--border-light);
+        transition: background 0.2s;
+      }
+      .file-chip:hover {
+        background: var(--accent-pale);
+      }
+      .file-chip .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .file-chip .chip-name {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .file-chip .chip-remove {
+        cursor: pointer;
+        color: #b0a590;
+        font-size: 14px;
+        line-height: 1;
+        transition: color 0.2s;
+        flex-shrink: 0;
+      }
+      .file-chip .chip-remove:hover {
+        color: var(--accent);
+      }
+      .empty-hint {
+        font-size: 12px;
+        color: #b0a590;
+        text-align: center;
+        padding: 12px 0;
+        letter-spacing: 0.5px;
+      }
+
+      /* Clear all */
+      .sidebar-footer {
+        padding: 12px 16px;
+        border-top: 1px solid var(--border-light);
+      }
+      .btn-clear-all {
+        width: 100%;
+        padding: 8px;
+        font-size: 12px;
+        font-family: "Noto Serif JP", serif;
+        background: none;
+        border: 1px solid var(--border);
+        border-radius: 3px;
+        color: #7a6f5e;
+        cursor: pointer;
+        letter-spacing: 1px;
+        transition: all 0.2s;
+      }
+      .btn-clear-all:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+        background: var(--accent-pale);
+      }
+
+      /* ── MAIN CONTENT ── */
+      .main {
+        flex: 1;
+        padding: 32px 32px 80px;
+        min-width: 0;
+      }
+
+      /* Top bar */
+      .topbar {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 28px;
+        flex-wrap: wrap;
+      }
+      .topbar-left {
+        flex: 1;
+      }
+      .page-heading {
+        font-family: "Zen Antique", serif;
+        font-size: 22px;
+        letter-spacing: 4px;
+        font-weight: 400;
+      }
+      .page-sub {
+        font-size: 12px;
+        color: #9a8f7e;
+        letter-spacing: 1px;
+        margin-top: 2px;
+      }
+
+      /* View toggle */
+      .view-toggle {
+        display: flex;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        overflow: hidden;
+        background: white;
+      }
+      .view-btn {
+        padding: 8px 18px;
+        font-size: 12px;
+        font-family: "Noto Serif JP", serif;
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #7a6f5e;
+        letter-spacing: 1px;
+        transition: all 0.2s;
+        border-right: 1px solid var(--border);
+        white-space: nowrap;
+      }
+      .view-btn:last-child {
+        border-right: none;
+      }
+      .view-btn.active {
+        background: var(--accent);
+        color: white;
+      }
+
+      /* Print btn */
+      .btn-print {
+        padding: 8px 18px;
+        font-size: 12px;
+        font-family: "Noto Serif JP", serif;
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        cursor: pointer;
+        color: #5a4e3a;
+        letter-spacing: 1px;
+        transition: all 0.2s;
+        white-space: nowrap;
+      }
+      .btn-print:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      /* Search / filter bar */
+      .filter-bar {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .search-wrap {
+        position: relative;
+        flex: 1;
+        min-width: 180px;
+        max-width: 280px;
+      }
+      .search-wrap input {
+        width: 100%;
+        padding: 8px 12px 8px 32px;
+        font-size: 13px;
+        font-family: "Noto Serif JP", serif;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        background: white;
+        color: var(--ink);
+        transition: border-color 0.2s;
+      }
+      .search-wrap input:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+      .search-wrap input::placeholder {
+        color: #b0a590;
+      }
+      .search-icon {
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 14px;
+        color: #b0a590;
+        pointer-events: none;
+      }
+      .filter-select {
+        padding: 8px 12px;
+        font-size: 13px;
+        font-family: "Noto Serif JP", serif;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        background: white;
+        color: var(--ink);
+        cursor: pointer;
+        transition: border-color 0.2s;
+      }
+      .filter-select:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+
+      /* ── SUMMARY CARDS ── */
+      .summary-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 14px;
+        margin-bottom: 28px;
+      }
+      .stat-card {
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 16px 20px;
+        box-shadow: 0 2px 8px var(--shadow);
+        position: relative;
+        overflow: hidden;
+      }
+      .stat-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(90deg, var(--accent), var(--accent-light));
+      }
+      .stat-label {
+        font-size: 10px;
+        letter-spacing: 2px;
+        color: #9a8f7e;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+      .stat-value {
+        font-family: "Zen Antique", serif;
+        font-size: 28px;
+        color: var(--ink);
+        letter-spacing: 1px;
+      }
+      .stat-value span {
+        font-size: 14px;
+        color: #9a8f7e;
+        margin-left: 4px;
+      }
+
+      /* ── EMPTY STATE ── */
+      .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 400px;
+        text-align: center;
+        color: #b0a590;
+      }
+      .empty-state .big-icon {
+        font-size: 56px;
+        margin-bottom: 20px;
+        opacity: 0.5;
+      }
+      .empty-state h2 {
+        font-family: "Zen Antique", serif;
+        font-size: 20px;
+        letter-spacing: 4px;
+        font-weight: 400;
+        color: #9a8f7e;
+        margin-bottom: 10px;
+      }
+      .empty-state p {
+        font-size: 13px;
+        letter-spacing: 0.5px;
+        line-height: 1.8;
+      }
+
+      /* ── TABLE ── */
+      .table-card {
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        box-shadow: 0 2px 12px var(--shadow);
+        overflow: hidden;
+        margin-bottom: 24px;
+      }
+      .table-card-header {
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--border-light);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: var(--paper-mid);
+      }
+      .table-card-title {
+        font-size: 13px;
+        letter-spacing: 2px;
+        color: var(--ink);
+        font-weight: 600;
+        flex: 1;
+      }
+      .badge-count {
+        font-size: 11px;
+        background: var(--accent-pale);
+        color: var(--accent);
+        border: 1px solid #e0c8c4;
+        border-radius: 10px;
+        padding: 2px 10px;
+        letter-spacing: 0.5px;
+      }
+      .table-scroll {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      thead th {
+        background: var(--paper-dark);
+        padding: 10px 14px;
+        text-align: left;
+        font-size: 11px;
+        letter-spacing: 1.5px;
+        color: #5a4e3a;
+        border-bottom: 1px solid var(--border);
+        white-space: nowrap;
+        font-weight: 600;
+      }
+      thead th.sortable {
+        cursor: pointer;
+        user-select: none;
+      }
+      thead th.sortable:hover {
+        color: var(--accent);
+      }
+      tbody tr {
+        border-bottom: 1px solid var(--border-light);
+        transition: background 0.15s;
+      }
+      tbody tr:last-child {
+        border-bottom: none;
+      }
+      tbody tr:hover {
+        background: var(--paper-mid);
+      }
+      tbody td {
+        padding: 10px 14px;
+        vertical-align: middle;
+      }
+
+      /* Capacity badge */
+      .cap-badge {
+        display: inline-block;
+        min-width: 44px;
+        padding: 4px 10px;
+        border-radius: 3px;
+        font-size: 13px;
+        font-weight: 600;
+        text-align: center;
+        letter-spacing: 0.5px;
+      }
+      .cap-0 {
+        background: var(--cap-0);
+        color: #9a8f7e;
+      }
+      .cap-nonzero {
+        background: var(--paper-dark);
+        color: var(--ink);
+        border: 1px solid var(--border);
+      }
+      .cap-low {
+        background: var(--cap-low);
+        color: #a04020;
+      }
+      .cap-mid {
+        background: var(--cap-mid);
+        color: white;
+      }
+      .cap-high {
+        background: var(--cap-high);
+        color: white;
+      }
+      .cap-full {
+        background: var(--cap-full);
+        color: white;
+      }
+
+      .room-tag {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 3px;
+        font-size: 12px;
+        border: 1px solid var(--border);
+        background: var(--paper-mid);
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+      }
+
+      /* ── DATE VIEW ── */
+      .date-section {
+        margin-bottom: 32px;
+      }
+      .date-heading {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 14px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid var(--border);
+        position: relative;
+      }
+      .date-heading::after {
+        content: "";
+        position: absolute;
+        bottom: -4px;
+        left: 0;
+        width: 30%;
+        height: 1px;
+        background: var(--border-light);
+      }
+      .date-num {
+        font-family: "Zen Antique", serif;
+        font-size: 28px;
+        letter-spacing: 2px;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .date-meta {
+        line-height: 1.4;
+      }
+      .date-full {
+        font-size: 16px;
+        letter-spacing: 2px;
+        color: var(--ink);
+      }
+      .date-day {
+        font-size: 11px;
+        color: #9a8f7e;
+        letter-spacing: 1px;
+      }
+      .date-total {
+        margin-left: auto;
+        font-size: 12px;
+        color: #5a4e3a;
+        background: var(--accent-pale);
+        border: 1px solid #e0c8c4;
+        border-radius: 3px;
+        padding: 4px 12px;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+      }
+
+      /* ── ROOM VIEW ── */
+      .room-section {
+        margin-bottom: 32px;
+      }
+      .room-heading {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 14px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid var(--border);
+        position: relative;
+      }
+      .room-heading::after {
+        content: "";
+        position: absolute;
+        bottom: -4px;
+        left: 0;
+        width: 30%;
+        height: 1px;
+        background: var(--border-light);
+      }
+      .room-icon {
+        font-size: 24px;
+      }
+      .room-name-large {
+        font-family: "Zen Antique", serif;
+        font-size: 20px;
+        letter-spacing: 3px;
+        color: var(--ink);
+      }
+      .room-total {
+        margin-left: auto;
+        font-size: 12px;
+        color: #5a4e3a;
+        background: var(--accent-pale);
+        border: 1px solid #e0c8c4;
+        border-radius: 3px;
+        padding: 4px 12px;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+      }
+
+      /* No-result */
+      .no-result {
+        text-align: center;
+        padding: 40px;
+        color: #b0a590;
+        font-size: 13px;
+        letter-spacing: 1px;
+      }
+
+      /* Legend */
+      .legend {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+        align-items: center;
+      }
+      .legend-label {
+        font-size: 11px;
+        color: #9a8f7e;
+        letter-spacing: 1px;
+      }
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11px;
+        color: #5a4e3a;
+      }
+      .legend-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 2px;
+      }
+
+      /* ── EXPORT BUTTONS ── */
+      .export-group {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .btn-export {
+        padding: 8px 16px;
+        font-size: 12px;
+        font-family: "Noto Serif JP", serif;
+        border-radius: 4px;
+        cursor: pointer;
+        letter-spacing: 1px;
+        transition: all 0.2s;
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        border: 1px solid var(--border);
+        background: white;
+        color: #5a4e3a;
+      }
+      .btn-export:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+        background: var(--accent-pale);
+      }
+      .btn-export.btn-primary-export {
+        background: var(--accent);
+        color: white;
+        border-color: var(--accent);
+      }
+      .btn-export.btn-primary-export:hover {
+        background: var(--accent-light);
+        border-color: var(--accent-light);
+      }
+      .export-divider {
+        width: 1px;
+        height: 24px;
+        background: var(--border);
+        margin: 0 2px;
+      }
+
+      /* ── PRINT ── */
+      @media print {
+        .sidebar {
+          display: none !important;
+        }
+        .topbar {
+          display: none !important;
+        }
+        .filter-bar {
+          display: none !important;
+        }
+        .main {
+          padding: 20px;
+        }
+        .table-card {
+          box-shadow: none;
+          border: 1px solid #ccc;
+          page-break-inside: avoid;
+        }
+        .date-section,
+        .room-section {
+          page-break-inside: avoid;
+        }
+        body {
+          background: white !important;
+        }
+        .print-header {
+          display: block !important;
+        }
+      }
+      .print-header {
+        display: none;
+        text-align: center;
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+        border-bottom: 2px solid #ccc;
+      }
+      .print-header h2 {
+        font-size: 20px;
+        letter-spacing: 4px;
+      }
+      .print-header p {
+        font-size: 12px;
+        color: #666;
+        margin-top: 4px;
+      }
+
+      /* ── ANIMATIONS ── */
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .fadein {
+        animation: fadeIn 0.3s ease;
+      }
+
+      /* Toast */
+      .toast {
+        position: fixed;
+        bottom: 28px;
+        left: 50%;
+        transform: translateX(-50%) translateY(80px);
+        background: var(--ink);
+        color: var(--paper);
+        padding: 10px 24px;
+        border-radius: 4px;
+        font-size: 13px;
+        letter-spacing: 1px;
+        opacity: 0;
+        transition: all 0.3s;
+        z-index: 1000;
+        white-space: nowrap;
+        pointer-events: none;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+
+      /* Scrollbar */
+      .sidebar::-webkit-scrollbar {
+        width: 4px;
+      }
+      .sidebar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .sidebar::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 2px;
+      }
+
+      /* Cross table */
+      tfoot td {
+        padding: 10px 14px;
+        font-size: 13px;
+      }
+      .cross-room-th {
+        writing-mode: initial;
+        text-align: center;
+        white-space: nowrap;
+        font-size: 12px;
+        letter-spacing: 0.5px;
+        padding: 10px 8px !important;
+      }
+
+      @media (max-width: 700px) {
+        .layout {
+          flex-direction: column;
+        }
+        .sidebar {
+          width: 100%;
+          height: auto;
+          position: static;
+        }
+        .main {
+          padding: 20px 16px 60px;
+        }
+        .summary-row {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <!-- ── SIDEBAR ── -->
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <div class="sidebar-logo">Research Lab Visit</div>
+          <div class="sidebar-title">研究室探訪</div>
+          <div class="sidebar-sub">スケジュール一覧</div>
+        </div>
+
+        <!-- Upload zone -->
+        <div class="upload-zone" id="uploadZone">
+          <input type="file" id="fileInput" accept=".csv" multiple />
+          <div class="upload-icon">📂</div>
+          <div class="upload-text">
+            <strong>CSVをドロップ</strong><br />
+            または クリックして選択<br />
+            <span style="font-size: 11px; color: #b0a590"
+              >複数ファイル一括対応</span
+            >
+          </div>
+        </div>
+
+        <!-- File chips -->
+        <div class="file-list">
+          <div class="file-list-label">読み込み済みファイル</div>
+          <div id="fileChips">
+            <div class="empty-hint">まだファイルがありません</div>
+          </div>
+        </div>
+
+        <div class="sidebar-footer">
+          <button class="btn-clear-all" onclick="clearAll()">すべて削除</button>
+        </div>
+      </aside>
+
+      <!-- ── MAIN ── -->
+      <main class="main">
+        <!-- Top bar -->
+        <div class="topbar">
+          <div class="topbar-left">
+            <div class="page-heading">スケジュール一覧</div>
+            <div class="page-sub" id="topbarSub">
+              CSVファイルを読み込んでください
+            </div>
+          </div>
+          <div class="view-toggle">
+            <button
+              class="view-btn active"
+              id="btnByDate"
+              onclick="setView('date')"
+            >
+              日程別
+            </button>
+            <button class="view-btn" id="btnByRoom" onclick="setView('room')">
+              教室別
+            </button>
+            <button class="view-btn" id="btnAll" onclick="setView('all')">
+              全件一覧
+            </button>
+            <button class="view-btn" id="btnCross" onclick="setView('cross')">
+              クロス集計
+            </button>
+          </div>
+          <div class="export-group">
+            <div class="export-divider"></div>
+            <button
+              id="btnDownloadCSV"
+              class="btn-export"
+              onclick="downloadCSV()"
+              title="クロス集計をCSVでダウンロード"
+              style="display:none;"
+            >
+              ⬇ CSV
+            </button>
+            <button
+              class="btn-export"
+              onclick="downloadHTML()"
+              title="全ビュー切り替え付きHTMLをダウンロード"
+            >
+              ⬇ HTML
+            </button>
+            <button
+              class="btn-export btn-primary-export"
+              onclick="printView()"
+              title="印刷ダイアログを開く"
+            >
+              🖨 印刷
+            </button>
+          </div>
+        </div>
+
+        <!-- 印刷時のみ表示するヘッダー -->
+        <div class="print-header" id="printHeader">
+          <h2>研究室探訪 スケジュール一覧</h2>
+          <p id="printHeaderSub"></p>
+        </div>
+
+        <!-- Filter bar -->
+        <div class="filter-bar">
+          <div class="search-wrap">
+            <span class="search-icon">🔍</span>
+            <input
+              type="text"
+              id="searchInput"
+              placeholder="教室名・日付で検索…"
+              oninput="renderView()"
+            />
+          </div>
+          <select class="filter-select" id="filterDate" onchange="renderView()">
+            <option value="">すべての日程</option>
+          </select>
+          <select class="filter-select" id="filterRoom" onchange="renderView()">
+            <option value="">すべての教室</option>
+          </select>
+        </div>
+
+        <!-- Summary -->
+        <div class="summary-row" id="summaryRow" style="display: none">
+          <div class="stat-card">
+            <div class="stat-label">読込教室数</div>
+            <div class="stat-value" id="statRooms">0<span>室</span></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">総コマ数</div>
+            <div class="stat-value" id="statSlots">0<span>コマ</span></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">合計受け入れ人数</div>
+            <div class="stat-value" id="statTotal">0<span>人</span></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">最大コマ（1日）</div>
+            <div class="stat-value" id="statMaxDay">0<span>人</span></div>
+          </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="legend" id="legendRow" style="display: none">
+          <span class="legend-label">受け入れ人数：</span>
+          <span class="legend-item"
+            ><span class="legend-dot" style="background: var(--cap-low)"></span
+            >1–4人</span
+          >
+          <span class="legend-item"
+            ><span class="legend-dot" style="background: var(--cap-mid)"></span
+            >5–9人</span
+          >
+          <span class="legend-item"
+            ><span class="legend-dot" style="background: var(--cap-high)"></span
+            >10–19人</span
+          >
+          <span class="legend-item"
+            ><span class="legend-dot" style="background: var(--cap-full)"></span
+            >20人以上</span
+          >
+        </div>
+
+        <!-- Content area -->
+        <div id="contentArea">
+          <!-- Empty state -->
+          <div class="empty-state" id="emptyState">
+            <div class="big-icon">📋</div>
+            <h2>データなし</h2>
+            <p>
+              左側の「CSVをドロップ」エリアに<br />各教室のCSVファイルをアップロードしてください。<br />複数ファイルの一括読み込みに対応しています。
+            </p>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+      // ── DATA STORE ──
+      let allData = []; // { room, no, date, day, time, cap }
+      let currentView = "date";
+      let isProcessing = false; // 二重読み込み防止フラグ
+      const COLORS = [
+        "#8b3a2a",
+        "#2e7d32",
+        "#1565c0",
+        "#6a1b9a",
+        "#e65100",
+        "#00695c",
+        "#ad1457",
+        "#4527a0",
+        "#558b2f",
+        "#5d4037",
+      ];
+      let roomColorMap = {};
+      let colorIdx = 0;
+
+      // ── FILE READING ──
+      function getRoomColor(room) {
+        if (!roomColorMap[room]) {
+          roomColorMap[room] = COLORS[colorIdx % COLORS.length];
+          colorIdx++;
+        }
+        return roomColorMap[room];
+      }
+
+      function parseCSV(text, filename) {
+        const roomName = filename.replace(/\.csv$/i, "");
+        const lines = text
+          .split("\n")
+          .map((l) => l.trim())
+          .filter((l) => l);
+        const rows = [];
+        for (let i = 1; i < lines.length; i++) {
+          const cols = lines[i].split(",");
+          if (cols.length < 5) continue;
+          const no = parseInt(cols[0]) || i;
+          const date = cols[1]?.trim() || "";
+          const day = cols[2]?.trim() || "";
+          const time = cols[3]?.trim() || "";
+          const cap = parseInt(cols[4]) || 0;
+          rows.push({ room: roomName, no, date, day, time, cap });
+        }
+        return rows;
+      }
+
+      async function loadFiles(files) {
+        if (isProcessing) return; // 二重呼び出し防止
+        isProcessing = true;
+        try {
+          let added = 0;
+          for (const file of files) {
+            if (!file.name.endsWith(".csv")) continue;
+            const roomName = file.name.replace(/\.csv$/i, "");
+            allData = allData.filter((r) => r.room !== roomName);
+            const text = await file.text();
+            const rows = parseCSV(text, file.name);
+            allData.push(...rows);
+            added++;
+          }
+          if (added > 0) {
+            updateFilters();
+            updateSummary();
+            renderView();
+            updateFileChips();
+            showToast(`✓ ${added}ファイルを読み込みました`);
+          }
+        } finally {
+          // 少し遅延してフラグを解除（同一イベントの多重発火を吸収）
+          setTimeout(() => { isProcessing = false; }, 200);
+        }
+      }
+
+      // ── UI: UPLOAD ──
+      const uploadZone = document.getElementById("uploadZone");
+      const fileInput = document.getElementById("fileInput");
+
+      // クリック選択：change イベントのみで処理
+      fileInput.addEventListener("change", (e) => {
+        loadFiles(e.target.files);
+        // 同じファイルを再選択できるよう値をリセット
+        e.target.value = "";
+      });
+
+      // ドロップゾーン：uploadZone の drop のみで処理（ページ全体は使わない）
+      uploadZone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        uploadZone.classList.add("drag-over");
+      });
+      uploadZone.addEventListener("dragleave", (e) => {
+        e.stopPropagation();
+        uploadZone.classList.remove("drag-over");
+      });
+      uploadZone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        uploadZone.classList.remove("drag-over");
+        loadFiles(e.dataTransfer.files);
+      });
+
+      // ページ全体へのドロップ（uploadZone以外にドロップした場合のフォールバック）
+      document.addEventListener("dragover", (e) => e.preventDefault());
+      document.addEventListener("drop", (e) => {
+        // uploadZone内のdropはすでに処理済みなのでスキップ
+        if (uploadZone.contains(e.target)) return;
+        e.preventDefault();
+        loadFiles(e.dataTransfer.files);
+      });
+
+      // ── FILE CHIPS ──
+      function updateFileChips() {
+        const rooms = [...new Set(allData.map((r) => r.room))];
+        const container = document.getElementById("fileChips");
+        if (rooms.length === 0) {
+          container.innerHTML =
+            '<div class="empty-hint">まだファイルがありません</div>';
+          return;
+        }
+        container.innerHTML = rooms
+          .map((room) => {
+            const color = getRoomColor(room);
+            return `<div class="file-chip">
+      <span class="dot" style="background:${color}"></span>
+      <span class="chip-name" title="${room}">${room}</span>
+      <span class="chip-remove" onclick="removeRoom('${room.replace(/'/g, "\\'")}')">×</span>
+    </div>`;
+          })
+          .join("");
+      }
+
+      function removeRoom(room) {
+        allData = allData.filter((r) => r.room !== room);
+        updateFilters();
+        updateSummary();
+        renderView();
+        updateFileChips();
+        showToast(`「${room}」を削除しました`);
+      }
+
+      function clearAll() {
+        allData = [];
+        roomColorMap = {};
+        colorIdx = 0;
+        updateFilters();
+        updateSummary();
+        renderView();
+        updateFileChips();
+        showToast("すべて削除しました");
+      }
+
+      // ── FILTERS ──
+      function updateFilters() {
+        const dates = [...new Set(allData.map((r) => r.date))].sort();
+        const rooms = [...new Set(allData.map((r) => r.room))].sort();
+
+        const fd = document.getElementById("filterDate");
+        const fr = document.getElementById("filterRoom");
+        const selDate = fd.value;
+        const selRoom = fr.value;
+
+        fd.innerHTML =
+          '<option value="">すべての日程</option>' +
+          dates
+            .map(
+              (d) =>
+                `<option value="${d}" ${d === selDate ? "selected" : ""}>${d}</option>`,
+            )
+            .join("");
+        fr.innerHTML =
+          '<option value="">すべての教室</option>' +
+          rooms
+            .map(
+              (r) =>
+                `<option value="${r}" ${r === selRoom ? "selected" : ""}>${r}</option>`,
+            )
+            .join("");
+      }
+
+      function getFiltered() {
+        const q = document.getElementById("searchInput").value.toLowerCase();
+        const fDate = document.getElementById("filterDate").value;
+        const fRoom = document.getElementById("filterRoom").value;
+        return allData.filter((r) => {
+          if (fDate && r.date !== fDate) return false;
+          if (fRoom && r.room !== fRoom) return false;
+          if (
+            q &&
+            !r.room.toLowerCase().includes(q) &&
+            !r.date.includes(q) &&
+            !r.time.includes(q)
+          )
+            return false;
+          return true;
+        });
+      }
+
+      // ── SUMMARY ──
+      function updateSummary() {
+        const hasData = allData.length > 0;
+        document.getElementById("summaryRow").style.display = hasData
+          ? "grid"
+          : "none";
+        document.getElementById("legendRow").style.display = hasData
+          ? "flex"
+          : "none";
+
+        const rooms = [...new Set(allData.map((r) => r.room))];
+        const total = allData.reduce((s, r) => s + r.cap, 0);
+
+        // Max capacity for a single date
+        const byDate = {};
+        allData.forEach((r) => {
+          byDate[r.date] = (byDate[r.date] || 0) + r.cap;
+        });
+        const maxDay = Math.max(0, ...Object.values(byDate));
+
+        document.getElementById("statRooms").innerHTML =
+          `${rooms.length}<span>室</span>`;
+        document.getElementById("statSlots").innerHTML =
+          `${allData.length}<span>コマ</span>`;
+        document.getElementById("statTotal").innerHTML =
+          `${total.toLocaleString()}<span>人</span>`;
+        document.getElementById("statMaxDay").innerHTML =
+          `${maxDay.toLocaleString()}<span>人</span>`;
+
+        const rooms_count = rooms.length;
+        document.getElementById("topbarSub").textContent = hasData
+          ? `${rooms_count}室 · ${allData.length}コマ · 合計${total.toLocaleString()}人`
+          : "CSVファイルを読み込んでください";
+      }
+
+      // ── CAP BADGE ──
+      function capBadge(cap) {
+        if (cap === 0) return `<span class="cap-badge cap-0">${cap}</span>`;
+        return `<span class="cap-badge cap-nonzero">${cap}</span>`;
+      }
+
+      // ── VIEW ──
+      function setView(v) {
+        currentView = v;
+        const btnMap = {
+          date: "ByDate",
+          room: "ByRoom",
+          all: "All",
+          cross: "Cross",
+        };
+        Object.keys(btnMap).forEach((x) => {
+          document
+            .getElementById("btn" + btnMap[x])
+            .classList.toggle("active", x === v);
+        });
+        // CSVボタンはクロス集計のときだけ表示
+        document.getElementById("btnDownloadCSV").style.display =
+          v === "cross" ? "" : "none";
+        renderView();
+      }
+
+      function renderView() {
+        const data = getFiltered();
+        const area = document.getElementById("contentArea");
+        const empty = document.getElementById("emptyState");
+
+        if (allData.length === 0) {
+          area.innerHTML = "";
+          area.appendChild(empty);
+          empty.style.display = "flex";
+          return;
+        }
+
+        if (data.length === 0) {
+          area.innerHTML =
+            '<div class="no-result">条件に一致するデータがありません</div>';
+          return;
+        }
+
+        if (currentView === "date") renderByDate(data, area);
+        else if (currentView === "room") renderByRoom(data, area);
+        else if (currentView === "cross") renderCross(data, area);
+        else renderAll(data, area);
+      }
+
+      // ── DATE VIEW ── (0人は非表示)
+      function renderByDate(data, area) {
+        const byDate = {};
+        data.forEach((r) => {
+          if (!byDate[r.date]) byDate[r.date] = [];
+          byDate[r.date].push(r);
+        });
+
+        const dates = Object.keys(byDate).sort();
+        let html = "";
+        dates.forEach((date, di) => {
+          const allRows = byDate[date].sort((a, b) =>
+            a.time.localeCompare(b.time),
+          );
+          const rows = allRows.filter((r) => r.cap > 0); // 0人非表示
+          if (rows.length === 0) return;
+          const dayLabel = allRows[0].day;
+          const dateTotal = rows.reduce((s, r) => s + r.cap, 0);
+          const [y, m, d] = date.split("-");
+          const dayNum = parseInt(d);
+
+          html += `<div class="date-section fadein" style="animation-delay:${di * 0.04}s">
+      <div class="date-heading">
+        <div class="date-num">${m}/${dayNum}</div>
+        <div class="date-meta">
+          <div class="date-full">${y}年${parseInt(m)}月${dayNum}日</div>
+          <div class="date-day">${dayLabel}曜日</div>
+        </div>
+        <div class="date-total">合計 ${dateTotal.toLocaleString()} 人</div>
+      </div>
+      <div class="table-card">
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>回数</th>
+                <th>時間帯</th>
+                <th>教室</th>
+                <th>受け入れ人数</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows
+                .map((r) => {
+                  const color = getRoomColor(r.room);
+                  return `<tr>
+                  <td style="color:#9a8f7e;font-size:12px;">#${r.no}</td>
+                  <td style="font-size:13px;letter-spacing:0.5px;">${r.time}</td>
+                  <td><span class="room-tag" style="border-left:3px solid ${color};padding-left:8px;">${r.room}</span></td>
+                  <td>${capBadge(r.cap)}</td>
+                </tr>`;
+                })
+                .join("")}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>`;
+        });
+
+        area.innerHTML =
+          html ||
+          '<div class="no-result">受け入れ人数が1人以上のデータがありません</div>';
+      }
+
+      // ── ROOM VIEW ── (0人は非表示)
+      function renderByRoom(data, area) {
+        const byRoom = {};
+        data.forEach((r) => {
+          if (!byRoom[r.room]) byRoom[r.room] = [];
+          byRoom[r.room].push(r);
+        });
+
+        const rooms = Object.keys(byRoom).sort();
+        let html = "";
+        rooms.forEach((room, ri) => {
+          const allRows = byRoom[room].sort(
+            (a, b) =>
+              a.date.localeCompare(b.date) || a.time.localeCompare(b.time),
+          );
+          const rows = allRows.filter((r) => r.cap > 0); // 0人非表示
+          if (rows.length === 0) return;
+          const roomTotal = rows.reduce((s, r) => s + r.cap, 0);
+          const color = getRoomColor(room);
+
+          html += `<div class="room-section fadein" style="animation-delay:${ri * 0.04}s">
+      <div class="room-heading">
+        <span class="room-icon">🏫</span>
+        <span class="room-name-large" style="border-left:4px solid ${color};padding-left:12px;">${room}</span>
+        <div class="room-total">合計 ${roomTotal.toLocaleString()} 人 / ${rows.length}コマ</div>
+      </div>
+      <div class="table-card">
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>回数</th>
+                <th>日程</th>
+                <th>曜日</th>
+                <th>時間帯</th>
+                <th>受け入れ人数</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows
+                .map(
+                  (r) => `<tr>
+                <td style="color:#9a8f7e;font-size:12px;">#${r.no}</td>
+                <td>${r.date}</td>
+                <td style="color:#7a6f5e;">${r.day}</td>
+                <td>${r.time}</td>
+                <td>${capBadge(r.cap)}</td>
+              </tr>`,
+                )
+                .join("")}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>`;
+        });
+
+        area.innerHTML =
+          html ||
+          '<div class="no-result">受け入れ人数が1人以上のデータがありません</div>';
+      }
+
+      // ── ALL VIEW ── (0人は非表示)
+      function renderAll(data, area) {
+        const sorted = [...data]
+          .filter((r) => r.cap > 0) // 0人非表示
+          .sort(
+            (a, b) =>
+              a.date.localeCompare(b.date) ||
+              a.time.localeCompare(b.time) ||
+              a.room.localeCompare(b.room),
+          );
+        const total = sorted.reduce((s, r) => s + r.cap, 0);
+
+        if (sorted.length === 0) {
+          area.innerHTML =
+            '<div class="no-result">受け入れ人数が1人以上のデータがありません</div>';
+          return;
+        }
+
+        area.innerHTML = `<div class="table-card fadein">
+    <div class="table-card-header">
+      <div class="table-card-title">全件一覧</div>
+      <span class="badge-count">${sorted.length}件 · 合計 ${total.toLocaleString()} 人</span>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>回数</th>
+            <th>日程</th>
+            <th>曜日</th>
+            <th>時間帯</th>
+            <th>教室</th>
+            <th>受け入れ人数</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${sorted
+            .map((r) => {
+              const color = getRoomColor(r.room);
+              return `<tr>
+              <td style="color:#9a8f7e;font-size:12px;">#${r.no}</td>
+              <td>${r.date}</td>
+              <td style="color:#7a6f5e;">${r.day}</td>
+              <td>${r.time}</td>
+              <td><span class="room-tag" style="border-left:3px solid ${color};padding-left:8px;">${r.room}</span></td>
+              <td>${capBadge(r.cap)}</td>
+            </tr>`;
+            })
+            .join("")}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+      }
+
+      // ── CROSS VIEW ── 行=日程/時間帯、列=教室名
+      function renderCross(data, area) {
+        // 全教室（列）
+        const rooms = [...new Set(allData.map((r) => r.room))].sort();
+        // 行キー = date + '/' + time（ソート用にdateも保持）
+        const slotMap = {}; // key -> { date, day, time, no, roomCaps:{} }
+        allData.forEach((r) => {
+          const key = r.date + "\t" + r.time;
+          if (!slotMap[key])
+            slotMap[key] = {
+              date: r.date,
+              day: r.day,
+              time: r.time,
+              no: r.no,
+              roomCaps: {},
+            };
+          slotMap[key].roomCaps[r.room] = r.cap;
+        });
+
+        // フィルタ適用（日程・教室フィルタを行・列レベルで）
+        const fDate = document.getElementById("filterDate").value;
+        const fRoom = document.getElementById("filterRoom").value;
+        const q = document.getElementById("searchInput").value.toLowerCase();
+        const visibleRooms = fRoom
+          ? [fRoom]
+          : rooms.filter((r) => !q || r.toLowerCase().includes(q));
+
+        // スロットをソート
+        const slots = Object.values(slotMap)
+          .filter((s) => !fDate || s.date === fDate)
+          .sort(
+            (a, b) =>
+              a.date.localeCompare(b.date) || a.time.localeCompare(b.time),
+          );
+
+        if (slots.length === 0 || visibleRooms.length === 0) {
+          area.innerHTML =
+            '<div class="no-result">条件に一致するデータがありません</div>';
+          return;
+        }
+
+        // 合計行・列の計算
+        const colTotals = {}; // room -> sum
+        visibleRooms.forEach((r) => {
+          colTotals[r] = 0;
+        });
+        slots.forEach((s) => {
+          visibleRooms.forEach((r) => {
+            colTotals[r] += s.roomCaps[r] || 0;
+          });
+        });
+
+        const thStyle = `style="min-width:80px;text-align:center;"`;
+        const roomHeaders = visibleRooms
+          .map((r) => {
+            const color = getRoomColor(r);
+            return `<th ${thStyle} style="min-width:80px;text-align:center;border-bottom:3px solid ${color};">${r}</th>`;
+          })
+          .join("");
+
+        const rows = slots
+          .map((s) => {
+            const [y, m, d] = s.date.split("-");
+            const rowLabel = `${parseInt(m)}/${parseInt(d)}<br><span style="font-size:11px;color:#9a8f7e;font-weight:400;">${s.time}</span>`;
+            const rowTotal = visibleRooms.reduce(
+              (sum, r) => sum + (s.roomCaps[r] || 0),
+              0,
+            );
+
+            const cells = visibleRooms
+              .map((r) => {
+                const cap = s.roomCaps[r] ?? null;
+                if (cap === null)
+                  return `<td style="text-align:center;color:#ddd5c0;">—</td>`;
+                if (cap === 0)
+                  return `<td style="text-align:center;color:#c8bfa8;font-size:12px;">0</td>`;
+                return `<td style="text-align:center;">${capBadge(cap)}</td>`;
+              })
+              .join("");
+
+            return `<tr>
+      <td style="white-space:nowrap;font-size:13px;font-weight:600;letter-spacing:0.5px;">${rowLabel}</td>
+      <td style="text-align:center;color:#7a6f5e;font-size:12px;">${s.day}</td>
+      ${cells}
+      <td style="text-align:center;font-weight:600;color:var(--accent);font-size:13px;">${rowTotal > 0 ? rowTotal : '<span style="color:#c8bfa8">0</span>'}</td>
+    </tr>`;
+          })
+          .join("");
+
+        const footCells = visibleRooms
+          .map(
+            (r) =>
+              `<td style="text-align:center;font-weight:600;font-size:13px;color:var(--accent);">${colTotals[r]}</td>`,
+          )
+          .join("");
+        const grandTotal = visibleRooms.reduce((s, r) => s + colTotals[r], 0);
+
+        area.innerHTML = `<div class="table-card fadein">
+    <div class="table-card-header">
+      <div class="table-card-title">クロス集計 — 日程 × 教室</div>
+      <span class="badge-count">${slots.length}コマ · ${visibleRooms.length}室 · 合計 ${grandTotal.toLocaleString()} 人</span>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th style="min-width:110px;">日程 / 時間帯</th>
+            <th style="min-width:40px;">曜日</th>
+            ${roomHeaders}
+            <th style="min-width:60px;text-align:center;">合計</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+        <tfoot>
+          <tr style="background:var(--paper-dark);border-top:2px solid var(--border);">
+            <td colspan="2" style="font-size:12px;letter-spacing:1px;color:#5a4e3a;font-weight:600;">合計</td>
+            ${footCells}
+            <td style="text-align:center;font-weight:600;color:var(--accent);">${grandTotal}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>`;
+      }
+
+      // ── PRINT ──
+      function printView() {
+        const viewNames = {
+          date: "日程別",
+          room: "教室別",
+          all: "全件一覧",
+          cross: "クロス集計",
+        };
+        const sub = document.getElementById("topbarSub").textContent;
+        document.getElementById("printHeaderSub").textContent =
+          `${viewNames[currentView]} · ${sub} · ${new Date().toLocaleDateString("ja-JP")}`;
+        window.print();
+      }
+
+      // ── DOWNLOAD CSV ──
+      function downloadCSV() {
+        if (allData.length === 0) {
+          showToast("データがありません");
+          return;
+        }
+        const data = getFiltered().filter((r) => r.cap > 0);
+        let csv = "\uFEFF"; // BOM
+
+        if (currentView === "cross") {
+          // クロス集計CSV
+          const rooms = [...new Set(allData.map((r) => r.room))].sort();
+          const fRoom = document.getElementById("filterRoom").value;
+          const fDate = document.getElementById("filterDate").value;
+          const q = document.getElementById("searchInput").value.toLowerCase();
+          const visRooms = fRoom
+            ? [fRoom]
+            : rooms.filter((r) => !q || r.toLowerCase().includes(q));
+
+          const slotMap = {};
+          allData.forEach((r) => {
+            const key = r.date + "\t" + r.time;
+            if (!slotMap[key])
+              slotMap[key] = { date: r.date, day: r.day, time: r.time };
+            slotMap[key][r.room] = r.cap;
+          });
+          const slots = Object.values(slotMap)
+            .filter((s) => !fDate || s.date === fDate)
+            .sort(
+              (a, b) =>
+                a.date.localeCompare(b.date) || a.time.localeCompare(b.time),
+            );
+
+          csv += ["日程/時間帯", "曜日", ...visRooms, "合計"].join(",") + "\n";
+          const colTotals = {};
+          visRooms.forEach((r) => {
+            colTotals[r] = 0;
+          });
+          slots.forEach((s) => {
+            const rowTotal = visRooms.reduce((sum, r) => sum + (s[r] || 0), 0);
+            visRooms.forEach((r) => {
+              colTotals[r] += s[r] || 0;
+            });
+            csv +=
+              [
+                `${s.date}/${s.time}`,
+                s.day,
+                ...visRooms.map((r) => s[r] ?? ""),
+                rowTotal,
+              ].join(",") + "\n";
+          });
+          const grandTotal = visRooms.reduce((s, r) => s + colTotals[r], 0);
+          csv +=
+            ["合計", "", ...visRooms.map((r) => colTotals[r]), grandTotal].join(
+              ",",
+            ) + "\n";
+        } else if (currentView === "date" || currentView === "all") {
+          csv += "日程,曜日,時間帯,教室,受け入れ人数\n";
+          const sorted = [...data].sort(
+            (a, b) =>
+              a.date.localeCompare(b.date) ||
+              a.time.localeCompare(b.time) ||
+              a.room.localeCompare(b.room),
+          );
+          sorted.forEach((r) => {
+            csv += `${r.date},${r.day},${r.time},${r.room},${r.cap}\n`;
+          });
+        } else {
+          // room view
+          csv += "教室,日程,曜日,時間帯,受け入れ人数\n";
+          const sorted = [...data].sort(
+            (a, b) =>
+              a.room.localeCompare(b.room) ||
+              a.date.localeCompare(b.date) ||
+              a.time.localeCompare(b.time),
+          );
+          sorted.forEach((r) => {
+            csv += `${r.room},${r.date},${r.day},${r.time},${r.cap}\n`;
+          });
+        }
+
+        const viewNames = {
+          date: "日程別",
+          room: "教室別",
+          all: "全件一覧",
+          cross: "クロス集計",
+        };
+        const fname = `研究室探訪_${viewNames[currentView]}_${today()}.csv`;
+        triggerDownload(
+          new Blob([csv], { type: "text/csv;charset=utf-8;" }),
+          fname,
+        );
+        showToast(`✓ ${fname} をダウンロードしました`);
+      }
+
+      // ── DOWNLOAD HTML ──
+      function downloadHTML() {
+        if (allData.length === 0) {
+          showToast("データがありません");
+          return;
+        }
+
+        const sub = document.getElementById("topbarSub").textContent;
+
+        // 4ビュー分のHTMLを一時的にダミーDIVへレンダリング
+        const tmp = document.createElement("div");
+        document.body.appendChild(tmp);
+        const viewKeys = ["date", "room", "all", "cross"];
+        const viewLabels = {
+          date: "日程別", room: "教室別", all: "全件一覧", cross: "クロス集計"
+        };
+        const savedView = currentView;
+        const sections = {};
+        viewKeys.forEach((v) => {
+          currentView = v;
+          tmp.innerHTML = "";
+          if (v === "date")  renderByDate(getFiltered(), tmp);
+          else if (v === "room")  renderByRoom(getFiltered(), tmp);
+          else if (v === "all")   renderAll(getFiltered(), tmp);
+          else                    renderCross(getFiltered(), tmp);
+          sections[v] = tmp.innerHTML;
+        });
+        currentView = savedView;
+        document.body.removeChild(tmp);
+
+        const tabButtons = viewKeys.map((v) =>
+          `<button class="tab-btn${v === "date" ? " active" : ""}" data-v="${v}" onclick="showTab('${v}')">${viewLabels[v]}</button>`
+        ).join("");
+
+        const tabSections = viewKeys.map((v) =>
+          `<div class="tab-section${v === "date" ? "" : " hidden"}" id="tab-${v}">${sections[v]}</div>`
+        ).join("");
+
+        const css = `
+:root{--ink:#1a1208;--paper:#f5f0e8;--paper-dark:#ede6d6;--paper-mid:#f0eadc;--accent:#8b3a2a;--accent-light:#c4614e;--accent-pale:#f3e8e5;--border:#c8bfa8;--border-light:#ddd5c0;--shadow:rgba(26,18,8,0.12);--cap-0:#ede6d6;--cap-nonzero-bg:#f0eadc;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--paper);color:var(--ink);font-family:"Noto Serif JP",serif;padding:36px 32px 80px;background-image:radial-gradient(ellipse at top left,#e8dcc8 0%,transparent 55%),radial-gradient(ellipse at bottom right,#ddd0b8 0%,transparent 55%);}
+.export-header{text-align:center;margin-bottom:28px;padding-bottom:20px;border-bottom:2px solid var(--border);}
+.export-header h1{font-family:"Zen Antique",serif;font-size:26px;letter-spacing:6px;font-weight:400;margin-bottom:5px;}
+.export-header p{font-size:11px;color:#9a8f7e;letter-spacing:1px;}
+.tab-bar{display:flex;border:1px solid var(--border);border-radius:4px;overflow:hidden;background:white;margin-bottom:24px;width:fit-content;}
+.tab-btn{padding:9px 22px;font-size:12px;font-family:"Noto Serif JP",serif;background:none;border:none;border-right:1px solid var(--border);cursor:pointer;color:#7a6f5e;letter-spacing:1px;transition:all .2s;}
+.tab-btn:last-child{border-right:none;}
+.tab-btn.active{background:var(--accent);color:white;}
+.tab-section.hidden{display:none;}
+.table-card{background:white;border:1px solid var(--border);border-radius:4px;box-shadow:0 2px 12px var(--shadow);overflow:hidden;margin-bottom:24px;}
+.table-card-header{padding:14px 20px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;gap:10px;background:var(--paper-mid);}
+.table-card-title{font-size:13px;letter-spacing:2px;color:var(--ink);font-weight:600;flex:1;}
+.badge-count{font-size:11px;background:var(--accent-pale);color:var(--accent);border:1px solid #e0c8c4;border-radius:10px;padding:2px 10px;letter-spacing:.5px;}
+.table-scroll{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{background:var(--paper-dark);padding:10px 14px;text-align:left;font-size:11px;letter-spacing:1.5px;color:#5a4e3a;border-bottom:1px solid var(--border);white-space:nowrap;font-weight:600;}
+tbody tr{border-bottom:1px solid var(--border-light);}
+tbody tr:last-child{border-bottom:none;}
+tbody td{padding:10px 14px;vertical-align:middle;}
+tfoot td{padding:10px 14px;font-size:13px;}
+.cap-badge{display:inline-block;min-width:44px;padding:4px 10px;border-radius:3px;font-size:13px;font-weight:600;text-align:center;letter-spacing:.5px;}
+.cap-0{background:var(--cap-0);color:#9a8f7e;}
+.cap-nonzero{background:var(--paper-dark);color:var(--ink);border:1px solid var(--border);}
+.room-tag{display:inline-block;padding:3px 10px;border-radius:3px;font-size:12px;border:1px solid var(--border);background:var(--paper-mid);letter-spacing:.5px;white-space:nowrap;}
+.date-section{margin-bottom:32px;}.room-section{margin-bottom:32px;}
+.date-heading,.room-heading{display:flex;align-items:center;gap:14px;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid var(--border);}
+.date-num{font-family:"Zen Antique",serif;font-size:28px;letter-spacing:2px;color:var(--accent);line-height:1;}
+.date-meta{line-height:1.4;}.date-full{font-size:16px;letter-spacing:2px;}.date-day{font-size:11px;color:#9a8f7e;letter-spacing:1px;}
+.date-total,.room-total{margin-left:auto;font-size:12px;color:#5a4e3a;background:var(--accent-pale);border:1px solid #e0c8c4;border-radius:3px;padding:4px 12px;letter-spacing:.5px;white-space:nowrap;}
+.room-icon{font-size:24px;}.room-name-large{font-family:"Zen Antique",serif;font-size:20px;letter-spacing:3px;}
+.no-result{text-align:center;padding:40px;color:#b0a590;font-size:13px;letter-spacing:1px;}
+.fadein{animation:none!important;}
+@media print{body{background:white!important;padding:20px;}.tab-bar{display:none!important;}.tab-section.hidden{display:block!important;}table{page-break-inside:avoid;}.date-section,.room-section{page-break-inside:avoid;}}`;
+
+        const html = `<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>研究室探訪 スケジュール一覧 — ${today()}</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;600&family=Zen+Antique&display=swap" rel="stylesheet"/>
+<style>${css}</style>
+</head>
+<body>
+<div class="export-header">
+  <h1>研究室探訪　スケジュール一覧</h1>
+  <p>${sub} · 出力日: ${new Date().toLocaleDateString("ja-JP")}</p>
+</div>
+<div class="tab-bar">${tabButtons}</div>
+${tabSections}
+<script>
+function showTab(v){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-section').forEach(s=>s.classList.add('hidden'));
+  document.querySelector('.tab-btn[data-v="'+v+'"]').classList.add('active');
+  document.getElementById('tab-'+v).classList.remove('hidden');
+}
+<\/script>
+</body>
+</html>`;
+
+        const fname = `研究室探訪_スケジュール一覧_${today()}.html`;
+        triggerDownload(new Blob([html], { type: "text/html;charset=utf-8;" }), fname);
+        showToast(`✓ ${fname} をダウンロードしました`);
+      }
+
+      // ── HELPERS ──
+      function today() {
+        return new Date().toISOString().slice(0, 10).replace(/-/g, "");
+      }
+      function triggerDownload(blob, filename) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+
+      // ── TOAST ──
+      function showToast(msg) {
+        const t = document.getElementById("toast");
+        t.textContent = msg;
+        t.classList.add("show");
+        clearTimeout(t._timer);
+        t._timer = setTimeout(() => t.classList.remove("show"), 2800);
+      }
+
+      // Init
+      renderView();
+    </script>
+  </body>
+</html>
