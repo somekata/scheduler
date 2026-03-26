@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>研究室探訪 スケジューラー</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;600&family=Zen+Antique&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1208;
+    --paper: #f5f0e8;
+    --paper-dark: #ede6d6;
+    --accent: #8b3a2a;
+    --accent-light: #c4614e;
+    --gold: #b8960c;
+    --border: #c8bfa8;
+    --shadow: rgba(26,18,8,0.15);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Noto Serif JP', serif;
+    min-height: 100vh;
+    padding: 40px 20px 60px;
+    background-image: 
+      radial-gradient(ellipse at top left, #e8dcc8 0%, transparent 60%),
+      radial-gradient(ellipse at bottom right, #ddd0b8 0%, transparent 60%);
+  }
+
+  .page-wrap {
+    max-width: 860px;
+    margin: 0 auto;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 48px;
+    padding-bottom: 32px;
+    border-bottom: 2px solid var(--border);
+    position: relative;
+  }
+
+  header::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40%;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .logo-mark {
+    font-family: 'Zen Antique', serif;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    opacity: 0.8;
+  }
+
+  h1 {
+    font-family: 'Zen Antique', serif;
+    font-size: clamp(28px, 5vw, 42px);
+    font-weight: 400;
+    letter-spacing: 6px;
+    color: var(--ink);
+    margin-bottom: 10px;
+  }
+
+  .subtitle {
+    font-size: 13px;
+    color: #7a6f5e;
+    letter-spacing: 2px;
+    font-weight: 300;
+  }
+
+  .card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 32px 36px;
+    margin-bottom: 28px;
+    box-shadow: 0 2px 12px var(--shadow);
+    position: relative;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px;
+    height: 100%;
+    background: var(--accent);
+    border-radius: 4px 0 0 4px;
+  }
+
+  .section-label {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    font-weight: 600;
+  }
+
+  /* Table */
+  .table-wrap {
+    overflow-x: auto;
+    margin-bottom: 8px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  thead th {
+    background: var(--paper-dark);
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 12px;
+    letter-spacing: 1px;
+    color: #5a4e3a;
+    border-bottom: 2px solid var(--border);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid #ede8de;
+    transition: background 0.15s;
+  }
+
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: #faf7f0; }
+
+  td {
+    padding: 10px 14px;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+
+  td.room-name {
+    font-weight: 600;
+    color: var(--accent);
+    font-size: 15px;
+  }
+
+  .capacity-input {
+    width: 90px;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    font-family: 'Noto Serif JP', serif;
+    font-size: 14px;
+    color: var(--ink);
+    background: var(--paper);
+    text-align: center;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    appearance: none;
+  }
+
+  .capacity-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(139,58,42,0.1);
+    background: white;
+  }
+
+  .capacity-input::placeholder { color: #b0a590; }
+
+  /* Status badge */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  .badge-filled {
+    background: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #a5d6a7;
+  }
+
+  .badge-empty {
+    background: #fff3e0;
+    color: #e65100;
+    border: 1px solid #ffcc80;
+  }
+
+  /* Progress bar */
+  .progress-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding: 14px 18px;
+    background: var(--paper-dark);
+    border-radius: 3px;
+    border: 1px solid var(--border);
+  }
+
+  .progress-label {
+    font-size: 12px;
+    color: #6a5f4e;
+    white-space: nowrap;
+    letter-spacing: 1px;
+  }
+
+  .progress-bar-wrap {
+    flex: 1;
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-light));
+    border-radius: 3px;
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+
+  .progress-count {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  /* Buttons */
+  .btn-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    margin-top: 8px;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 24px;
+    border: none;
+    border-radius: 3px;
+    font-family: 'Noto Serif JP', serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 2px 8px rgba(139,58,42,0.3);
+  }
+
+  .btn-primary:hover {
+    background: #732f21;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(139,58,42,0.35);
+  }
+
+  .btn-primary:active { transform: translateY(0); }
+
+  .btn-primary:disabled {
+    background: #c0b8ac;
+    box-shadow: none;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+  }
+
+  .btn-secondary:hover {
+    background: rgba(139,58,42,0.06);
+  }
+
+  /* Download list */
+  .download-section {
+    display: none;
+  }
+
+  .download-section.visible {
+    display: block;
+    animation: fadeIn 0.35s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .download-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .download-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--paper-dark);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    transition: background 0.15s;
+    gap: 12px;
+  }
+
+  .download-item:hover { background: #e8e0d0; }
+
+  .file-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .file-icon {
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .file-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .file-meta {
+    font-size: 11px;
+    color: #8a7f6e;
+    white-space: nowrap;
+  }
+
+  .btn-dl {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 3px;
+    font-family: 'Noto Serif JP', serif;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: background 0.15s;
+    text-decoration: none;
+  }
+
+  .btn-dl:hover { background: #732f21; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    background: var(--ink);
+    color: var(--paper);
+    padding: 12px 20px;
+    border-radius: 4px;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 16px var(--shadow);
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    z-index: 100;
+    max-width: 300px;
+  }
+
+  .toast.show {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  .warn-text {
+    font-size: 12px;
+    color: #8a6a3a;
+    margin-top: 6px;
+    display: none;
+  }
+
+  .warn-text.visible { display: block; }
+
+  @media (max-width: 600px) {
+    .card { padding: 20px 18px; }
+    .btn-row { justify-content: stretch; }
+    .btn { width: 100%; justify-content: center; }
+  }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <header>
+    <div class="logo-mark">Research Lab Visit</div>
+    <h1>研究室探訪</h1>
+    <p class="subtitle">スケジュール入力フォーム</p>
+  </header>
+
+  <!-- Input Section -->
+  <div class="card">
+    <div class="section-label">受け入れ人数の入力</div>
+
+    <div class="progress-row">
+      <span class="progress-label">入力進捗</span>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="progressBar"></div>
+      </div>
+      <span class="progress-count" id="progressCount">0 / 11</span>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>No.</th>
+            <th>教室番号</th>
+            <th>曜日</th>
+            <th>時間帯</th>
+            <th>受け入れ人数</th>
+            <th>状態</th>
+          </tr>
+        </thead>
+        <tbody id="scheduleTable"></tbody>
+      </table>
+    </div>
+
+    <p class="warn-text" id="warnText">⚠ 未入力の教室があります。すべて入力してから生成してください。</p>
+
+    <div class="btn-row" style="margin-top:20px;">
+      <button class="btn btn-secondary" onclick="clearAll()">リセット</button>
+      <button class="btn btn-primary" id="generateBtn" onclick="generateCSVs()">
+        <span>CSV ファイルを生成</span>
+        <span>→</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Download Section -->
+  <div class="card download-section" id="downloadSection">
+    <div class="section-label">ダウンロード</div>
+    <div class="download-list" id="downloadList"></div>
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="btn btn-secondary" onclick="downloadAll()">すべてダウンロード</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const rawData = [
+  { no: 1,  room: "46126", day: "火", time: "16:45-17:30" },
+  { no: 2,  room: "46126", day: "火", time: "17:30-18:15" },
+  { no: 3,  room: "46133", day: "火", time: "16:45-17:30" },
+  { no: 4,  room: "46133", day: "火", time: "17:30-18:15" },
+  { no: 5,  room: "46154", day: "火", time: "17:30-18:15" },
+  { no: 6,  room: "46161", day: "火", time: "17:30-18:15" },
+  { no: 7,  room: "46168", day: "火", time: "17:30-18:15" },
+  { no: 8,  room: "46182", day: "火", time: "17:30-18:15" },
+  { no: 9,  room: "46196", day: "火", time: "17:30-18:15" },
+  { no: 10, room: "46210", day: "火", time: "17:30-18:15" },
+  { no: 11, room: "46217", day: "火", time: "15:45-16:30" },
+];
+
+let csvBlobs = [];
+
+function buildTable() {
+  const tbody = document.getElementById('scheduleTable');
+  tbody.innerHTML = '';
+  rawData.forEach((row, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${row.no}</td>
+      <td class="room-name">${row.room}</td>
+      <td>${row.day}</td>
+      <td>${row.time}</td>
+      <td>
+        <input 
+          class="capacity-input" 
+          type="number" 
+          min="1" max="999"
+          id="cap_${i}"
+          placeholder="人数"
+          oninput="updateProgress()"
+        >
+      </td>
+      <td><span class="badge badge-empty" id="badge_${i}">未入力</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function updateProgress() {
+  let filled = 0;
+  rawData.forEach((_, i) => {
+    const val = document.getElementById(`cap_${i}`).value;
+    const badge = document.getElementById(`badge_${i}`);
+    if (val && parseInt(val) > 0) {
+      filled++;
+      badge.textContent = '入力済';
+      badge.className = 'badge badge-filled';
+    } else {
+      badge.textContent = '未入力';
+      badge.className = 'badge badge-empty';
+    }
+  });
+
+  const total = rawData.length;
+  const pct = (filled / total) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressCount').textContent = `${filled} / ${total}`;
+
+  const btn = document.getElementById('generateBtn');
+  btn.disabled = filled < total;
+}
+
+function generateCSVs() {
+  // Validate
+  for (let i = 0; i < rawData.length; i++) {
+    const val = document.getElementById(`cap_${i}`).value;
+    if (!val || parseInt(val) < 1) {
+      document.getElementById('warnText').classList.add('visible');
+      showToast('⚠ 未入力の教室があります');
+      return;
+    }
+  }
+  document.getElementById('warnText').classList.remove('visible');
+
+  // Group by room
+  const grouped = {};
+  rawData.forEach((row, i) => {
+    const cap = document.getElementById(`cap_${i}`).value;
+    if (!grouped[row.room]) grouped[row.room] = [];
+    grouped[row.room].push({ ...row, capacity: parseInt(cap) });
+  });
+
+  // Build CSVs
+  csvBlobs = [];
+  const dlList = document.getElementById('downloadList');
+  dlList.innerHTML = '';
+
+  Object.entries(grouped).forEach(([room, rows]) => {
+    const header = 'No.,教室番号,曜日,時間帯,受け入れ人数\n';
+    const body = rows.map(r =>
+      `${r.no},${r.room},${r.day},${r.time},${r.capacity}`
+    ).join('\n');
+    const csvContent = '\uFEFF' + header + body; // BOM for Excel
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const filename = `教室${room}.csv`;
+
+    csvBlobs.push({ url, filename, blob });
+
+    const totalCap = rows.reduce((sum, r) => sum + r.capacity, 0);
+    const item = document.createElement('div');
+    item.className = 'download-item';
+    item.innerHTML = `
+      <div class="file-info">
+        <span class="file-icon">📄</span>
+        <div>
+          <div class="file-name">${filename}</div>
+          <div class="file-meta">${rows.length}コマ・合計 ${totalCap} 人</div>
+        </div>
+      </div>
+      <a class="btn-dl" href="${url}" download="${filename}">
+        ↓ DL
+      </a>
+    `;
+    dlList.appendChild(item);
+  });
+
+  document.getElementById('downloadSection').classList.add('visible');
+  document.getElementById('downloadSection').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  showToast(`✓ ${Object.keys(grouped).length} 件の CSV を生成しました`);
+}
+
+function downloadAll() {
+  csvBlobs.forEach(({ url, filename }, idx) => {
+    setTimeout(() => {
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+    }, idx * 300);
+  });
+  showToast('すべてのファイルをダウンロード中...');
+}
+
+function clearAll() {
+  rawData.forEach((_, i) => {
+    document.getElementById(`cap_${i}`).value = '';
+    const badge = document.getElementById(`badge_${i}`);
+    badge.textContent = '未入力';
+    badge.className = 'badge badge-empty';
+  });
+  document.getElementById('progressBar').style.width = '0%';
+  document.getElementById('progressCount').textContent = '0 / 11';
+  document.getElementById('generateBtn').disabled = false;
+  document.getElementById('downloadSection').classList.remove('visible');
+  document.getElementById('warnText').classList.remove('visible');
+  csvBlobs = [];
+  showToast('リセットしました');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// Init
+buildTable();
+updateProgress();
+</script>
+</body>
+</html>
